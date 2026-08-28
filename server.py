@@ -155,7 +155,7 @@ def scan_files(folder):
                 if item.is_file():
                     entries.append({"path": item.name, "name": item.name, "kind": "file", "size": format_size(stat.st_size), "bytes": stat.st_size, "modified": datetime.fromtimestamp(stat.st_mtime, timezone.utc).isoformat()})
                 elif item.is_dir():
-                    entries.append({"path": item.name, "name": item.name, "kind": "directory", "size": "文件夹", "bytes": 0, "modified": datetime.fromtimestamp(stat.st_mtime, timezone.utc).isoformat()})
+                    entries.append({"path": item.name, "name": item.name, "kind": "directory", "size": format_size(stat.st_size), "bytes": stat.st_size, "modified": datetime.fromtimestamp(stat.st_mtime, timezone.utc).isoformat()})
                 if len(entries) >= MAX_FILES_PER_SHARE:
                     return sorted(entries, key=lambda entry: (entry["kind"] != "directory", entry["name"].lower())), True
             except OSError:
