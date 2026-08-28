@@ -6,16 +6,38 @@
 
 ## 启动
 
-在 A 机器安装 Python 3.9 或更新版本后，于项目目录执行：
+在 A 机器安装 Python 3.9 或更新版本后，于项目目录执行。端口通过 `--port` 配置，管理员口令建议通过环境变量配置：
 
 ```powershell
 $env:LAN_FILE_HUB_ADMIN_TOKEN = "请替换为足够长的管理员口令"
 python server.py --port 8080
 ```
 
+也可直接在启动命令中指定口令：
+
+```powershell
+python server.py --port 8080 --admin-token "请替换为足够长的管理员口令"
+```
+
+但该方式可能出现在命令历史或进程参数中，推荐优先使用环境变量。
+
 访问 `http://A机器IP:8080`，例如 `http://192.168.1.20:8080`。
 
 服务会创建 `data/lan_file_hub.db` 保存共享目录信息，但**不会保存 SMB 密码**。密码由 Windows 凭据管理器按运行服务的 Windows 账户保存。
+
+## Windows 开机后台启动（推荐：任务计划程序）
+
+推荐通过 Windows 自带的**任务计划程序**设置，不再依赖双击 CMD 脚本；它更稳定，并可在没有用户登录时后台运行。
+
+1. 在项目目录新建 `data` 文件夹，把 `run-background.ps1.example` 复制为 `data\\run-background.ps1`。
+2. 用记事本打开 `data\\run-background.ps1`，只修改顶部的 `$AdminToken` 和 `$Port`，保存。该文件含管理员口令，`data/` 已被 Git 忽略，请不要分享给他人。
+3. 按 `Win + R`，输入 `taskschd.msc`，打开“任务计划程序”，选择右侧**创建任务**（不是“创建基本任务”）。
+4. 在“常规”页：名称填 `LAN File Hub`；选择运行服务的 Windows 账户；勾选“无论用户是否登录都要运行”和“使用最高权限运行”。
+5. 在“触发器”页，新建触发器，选择“启动时”。
+6. 在“操作”页，新建操作：程序或脚本填 `powershell.exe`；添加参数填 `-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\\你的项目路径\\data\\run-background.ps1"`。把路径替换为实际完整路径。
+7. 在“设置”页勾选“如果任务失败，重新启动任务”，间隔设为 1 分钟、重试 3 次；保存时输入该 Windows 账户的登录密码。
+
+创建后，在任务计划程序中选中 `LAN File Hub` 并点击“运行”测试；浏览器能打开 `http://localhost:端口` 即表示成功。任务必须使用最初添加 SMB 凭据的同一个 Windows 账户运行。
 
 ## 添加 B 机器的共享目录
 
@@ -38,7 +60,3 @@ python server.py --port 8080
 - 每个服务器主机建议仅使用一个 SMB 账号，避免 Windows 同时用不同凭据连接同一主机导致冲突。
 - 管理员口令和 SMB 密码会经过浏览器提交；正式部署应使用内网 HTTPS（IIS/Nginx 反向代理）并仅向受信任人员开放管理页。
 - 删除共享目录只会删除本系统的登记信息，不会删除 B 机器上的文件或 Windows 凭据。
-
-## Linux 说明
-
-本版本的“IP + 用户名 + 密码”自动连接采用 Windows 凭据管理器，因此需部署在 Windows。若 A 是 Linux，请先用 `mount.cifs` 将 B 的 SMB 目录挂载到本机；如需要 Linux 端在网页中直接管理 SMB 凭据，需要另行接入系统密钥环或 SMB 客户端。

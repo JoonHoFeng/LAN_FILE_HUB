@@ -111,7 +111,7 @@ def validate_share(payload, needs_password):
 
 def save_windows_credential(host, username, password):
     if os.name != "nt":
-        raise ValueError("“IP + 用户名 + 密码”直连 SMB 仅支持 Windows 服务器。Linux 请先挂载 SMB 目录后再接入。")
+        raise ValueError("此服务仅支持 Windows 系统运行。")
     if not password:
         return
     try:
@@ -332,12 +332,17 @@ class AppHandler(SimpleHTTPRequestHandler):
 
 
 def main():
+    global ADMIN_TOKEN
     parser = argparse.ArgumentParser(description="运行邻里盘内网文件门户")
     parser.add_argument("--host", default="0.0.0.0", help="监听地址，默认允许局域网访问")
     parser.add_argument("--port", default=8080, type=int, help="监听端口，默认 8080")
+    parser.add_argument("--admin-token", help="管理员口令；建议优先使用 LAN_FILE_HUB_ADMIN_TOKEN 环境变量")
     args = parser.parse_args()
+    if args.admin_token:
+        ADMIN_TOKEN = args.admin_token
+    if os.name != "nt":
+        raise SystemExit("此服务仅支持 Windows 系统运行。")
     if not ADMIN_TOKEN: print("警告：未设置 LAN_FILE_HUB_ADMIN_TOKEN，管理接口将保持锁定。")
-    if os.name != "nt": print("提示：Linux 服务器不能直接保存 SMB 账号密码；请先挂载 SMB 目录后使用。")
     server = ThreadingHTTPServer((args.host, args.port), AppHandler)
     print(f"邻里盘已启动：http://{args.host}:{args.port}\n按 Ctrl+C 停止服务。")
     try: server.serve_forever()

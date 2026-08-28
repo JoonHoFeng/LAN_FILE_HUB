@@ -1,0 +1,25 @@
+$ErrorActionPreference = 'Stop'
+
+# 将本文件复制到 data\run-background.ps1 后，只修改以下两项。
+$AdminToken = '请替换为管理员口令'
+$Port = 8080
+
+$projectRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
+$server = Join-Path $projectRoot 'server.py'
+if (-not (Test-Path $server)) { throw "未找到 server.py：$server" }
+
+$python = Get-Command pythonw.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+if (-not $python) {
+    $python = Get-Command python.exe -ErrorAction SilentlyContinue |
+        Where-Object { $_.Source -notmatch 'WindowsApps' } |
+        Select-Object -First 1
+}
+if (-not $python) {
+    $candidate = (& py.exe -3 -c "import sys; print(sys.executable)" 2>$null | Select-Object -First 1).Trim()
+    if ($candidate -and (Test-Path $candidate)) { $python = Get-Item $candidate }
+}
+if (-not $python) { throw '未找到 Python 3。请安装 Python，并勾选“Add Python to PATH”。' }
+
+$pythonPath = if ($python.Path) { $python.Path } elseif ($python.Source) { $python.Source } else { $python.FullName }
+$env:LAN_FILE_HUB_ADMIN_TOKEN = $AdminToken
+& $pythonPath $server --port $Port
