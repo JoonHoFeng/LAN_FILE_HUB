@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>邻里盘 · 局域网共享文件</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="#files" aria-label="邻里盘首页">
+          <span class="brand-mark">↗</span>
+          <span>邻里盘</span>
+        </a>
+        <nav class="main-nav" aria-label="主导航">
+          <a class="nav-link active" data-view-link="files" href="#files"><span>▣</span>共享文件</a>
+          <a class="nav-link" data-view-link="manage" href="#manage"><span>⊞</span>共享管理</a>
+          <a class="nav-link" data-view-link="analysis" href="#analysis"><span>◔</span>目录分析</a>
+        </nav>
+        <div class="sidebar-note">
+          <span class="status-dot"></span>
+          <span>局域网已连接</span>
+        </div>
+        <div class="sidebar-footer"><div>LAN FILE HUB<br /><span>v1.0.0</span></div><button id="donate-button" class="donate-button" type="button" onclick="document.getElementById('donate-dialog').showModal()">♡ 打赏</button></div>
+      </aside>
+
+      <main class="main-content">
+        <section id="files-view" class="view" aria-labelledby="files-title">
+          <header class="page-header">
+            <div>
+              <p class="eyebrow">局域网文件中心</p>
+              <h1 id="files-title">共享文件</h1>
+              <p class="subcopy">仅浏览共享根目录的一级项目；文件夹会打包后下载。</p>
+            </div>
+            <a class="button secondary" href="#manage">管理共享文件夹 <span>→</span></a>
+          </header>
+
+          <div class="toolbar">
+            <label class="search-box">
+              <span>⌕</span>
+              <input id="file-search" type="search" placeholder="搜索文件名、类型或共享文件夹" autocomplete="off" />
+            </label>
+            <div class="file-count" id="file-count"></div>
+          </div>
+
+          <div id="share-groups" class="share-groups"></div>
+          <div id="empty-files" class="empty-state hidden">
+            <div class="empty-icon">⌁</div>
+            <h2>没有找到文件</h2>
+            <p>调整搜索条件，或先在共享管理中添加一个文件夹。</p>
+            <a class="button" href="#manage">添加共享文件夹</a>
+          </div>
+        </section>
+
+        <section id="manage-view" class="view hidden" aria-labelledby="manage-title">
+          <header class="page-header">
+            <div>
+              <p class="eyebrow">配置中心</p>
+              <h1 id="manage-title">共享管理</h1>
+              <p class="subcopy">连接局域网中的 Windows SMB 共享，文件将自动扫描并向所有访客展示。</p>
+            </div>
+            <button class="button" id="add-share-button" type="button"><span>＋</span> 添加共享文件夹</button>
+          </header>
+
+          <div class="manage-tip">
+            <span class="tip-symbol">i</span>
+            <p>填写 B 机器的 <strong>IP、共享名和 SMB 账号</strong>。密码不会写入本系统数据库，而是由 Windows 服务器安全保存到凭据管理器；建议通过 HTTPS 使用此页面。</p>
+          </div>
+          <div class="section-heading">
+            <h2>已登记的共享文件夹</h2>
+            <span id="share-count"></span>
+          </div>
+          <div id="share-list" class="share-list"></div>
+          <div id="empty-shares" class="empty-state compact hidden">
+            <div class="empty-icon">⊞</div>
+            <h2>还没有共享文件夹</h2>
+            <p>添加 B 机器上的 Windows 共享文件夹开始共享。</p>
+          </div>
+        </section>
+
+        <section id="analysis-view" class="view hidden" aria-labelledby="analysis-title">
+          <header class="page-header">
+            <div>
+              <p class="eyebrow">文件结构概览</p>
+              <h1 id="analysis-title">共享目录分析</h1>
+              <p class="subcopy">按文件类别查看每个共享根目录一级项目的组成占比。</p>
+            </div>
+            <a class="button secondary" href="#files">返回文件列表 <span>→</span></a>
+          </header>
+          <div id="analysis-grid" class="analysis-grid"></div>
+          <div id="empty-analysis" class="empty-state hidden">
+            <div class="empty-icon">◔</div>
+            <h2>还没有可分析的文件</h2>
+            <p>连接共享文件夹并扫描到文件后，类别占比会显示在这里。</p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="share-dialog" class="dialog">
+      <form id="share-form" method="dialog">
+        <div class="dialog-header">
+          <div>
+            <p class="eyebrow" id="dialog-kicker">新增位置</p>
+            <h2 id="dialog-title">添加共享文件夹</h2>
+          </div>
+          <button class="icon-button" type="button" id="close-dialog" aria-label="关闭">×</button>
+        </div>
+        <input id="editing-id" type="hidden" />
+        <label>共享服务器 IP / 主机名<input id="share-host" required maxlength="253" placeholder="例如：192.168.1.22 或 FILE-SERVER" /></label>
+        <label>共享文件夹名称<input id="share-name" required maxlength="80" placeholder="例如：设计资源" /></label>
+        <label>SMB 用户名<input id="share-username" required maxlength="160" placeholder="例如：zhangsan" /><span class="field-help">只填写 B 机器上的 Windows 用户名；系统会自动使用 <code>共享服务器 IP\\用户名</code> 连接。</span></label>
+        <label>SMB 密码 <span class="optional" id="password-hint">首次添加时必填</span><input id="share-password" type="password" autocomplete="new-password" placeholder="仅用于连接共享文件夹，不写入本系统数据库" /></label>
+        <div class="dialog-actions">
+          <button class="button secondary" type="button" id="cancel-dialog">取消</button>
+          <button class="button" type="submit">保存共享文件夹</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="donate-dialog" class="dialog donate-dialog">
+      <div class="donate-content">
+        <div class="dialog-header">
+          <div><p class="eyebrow">感谢支持</p><h2>微信扫码打赏</h2></div>
+          <button class="icon-button" type="button" id="close-donate-dialog" aria-label="关闭" onclick="document.getElementById('donate-dialog').close()">×</button>
+        </div>
+        <img class="donation-qr" src="./assets/wechat-donation.jpg" alt="微信收款二维码" />
+        <p>感谢你的支持与鼓励。</p>
+      </div>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="./app.js"></script>
+  </body>
+</html>
